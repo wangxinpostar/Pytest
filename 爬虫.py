@@ -28,10 +28,6 @@ class Douban:
                     "/html/body/div[3]/div[1]/div/div[1]/ol/li["+i+"]/div/div[2]/div[2]/div/span[4]/text()"))
                 director = "".join(html.xpath(
                     "/html/body/div[3]/div[1]/div/div[1]/ol/li["+i+"]/div/div[2]/div[2]/p[1]/text()[1]"))
-                director = director.replace(" ", "")
-                director = director.replace("xa0", "")
-                director = director.replace("\\n", "")
-                director = director.replace("\\", "")
                 print(title, score, scoret, director, "\n")
 
 if __name__ == "__main__":
