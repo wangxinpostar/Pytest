@@ -11,7 +11,6 @@ class Douban:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36 Edg/111.0.1661.43'}
 
     def get_top250(self):
-        a=0
         for start in self.starnum:
             start = str(start)
             respone = requests.get(
