@@ -4,12 +4,16 @@ import time
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import os
+from snownlp import SnowNLP
 from tabulate import tabulate
 from pyecharts import options as opts
 from pyecharts.charts import *
 from pyecharts.commons.utils import JsCode
+from collections import Counter
 import matplotlib.font_manager as fm
 from namemap import namemap
+import jieba.analyse
 from sklearn.tree import export_graphviz
 from IPython.display import Image
 from pylab import *
@@ -22,7 +26,6 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 mpl.rcParams['font.sans-serif'] = ['SimHei']
 
 
-
 # 数据存放在列表里
 datas = []
 # 遍历十页数据
@@ -32,8 +35,8 @@ for k in range(10):
     headers = {
         'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36 Edg/111.0.1661.43'
     }
-    r = requests.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, 'lxml')
+    i = requests.get(url, headers=headers)
+    soup = BeautifulSoup(i.text, 'lxml')
     # 查找电影链接
     lists = soup.find_all('div', {'class': 'hd'})
 
@@ -119,11 +122,9 @@ for k in range(10):
         print("电影《{0}》已爬取完成...".format(name))
 
 
-
 # 写入到文件
 df = pd.DataFrame(datas)
 df.to_csv("豆瓣电影top250.csv", index=False, header=True, encoding='utf_8_sig')
-
 
 
 data = pd.read_csv('豆瓣电影top250.csv')
@@ -141,7 +142,6 @@ c = (
         datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_='inside')], )
 )
 c.render_notebook()
-
 
 
 data = pd.read_csv('豆瓣电影top250.csv')
@@ -200,7 +200,6 @@ pie.add(
 pie.render_notebook()
 
 
-
 data = pd.read_csv('豆瓣电影top250.csv')
 df = data.sort_values(by='评价人数', ascending=True)
 c = (
@@ -218,6 +217,24 @@ c = (
 )
 c.render_notebook()
 
+
+data = pd.read_csv('豆瓣电影top250.csv', encoding='utf-8')
+
+# 计算每个导演的作品数量
+director_counts = data['导演'].value_counts().head(10)
+
+# 绘制条形图
+bar = (
+    Bar()
+    .add_xaxis(director_counts.index.tolist())
+    .add_yaxis("数量", director_counts.tolist())
+    .set_global_opts(title_opts=opts.TitleOpts(title="导演作品数量Top10"),
+                     yaxis_opts=opts.AxisOpts(name='数量'),
+                     xaxis_opts=opts.AxisOpts(
+                         name='导演', axislabel_opts=opts.LabelOpts(rotate=30)),
+                     datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_='inside')])
+)
+bar.render_notebook()
 
 
 data = pd.read_csv('豆瓣电影top250.csv')
@@ -240,7 +257,6 @@ c = (
 c.render_notebook()
 
 
-
 data = pd.read_csv('豆瓣电影top250.csv')
 country_counts = data['国家/地区'].value_counts()
 name_map = namemap.nameMap
@@ -252,7 +268,6 @@ map.set_global_opts(title_opts=opts.TitleOpts(title='全球各地区上榜电影
                         range_color=["#E0ECF8", "#045FB4"], max_=120)
                     )
 map.render_notebook()
-
 
 
 # 读取数据
@@ -276,7 +291,6 @@ bar.set_global_opts(
 bar.render_notebook()
 
 
-
 # 构造词云数据
 data = list(zip(t, count))
 
@@ -289,19 +303,17 @@ wordcloud = WordCloud() \
 wordcloud.render_notebook()
 
 
-
 data = pd.read_csv('豆瓣电影top250.csv')
 data.head()
 for columns in data.iloc[:, 12:].columns:
     data[columns] = data[columns].str.strip("%").astype(float)/100
-y_train = data["评分"].values
-x_train = data.iloc[:, 12:].values
-
+y_train = data["评分"].values[:200]
+x_train = data.iloc[:, 12:].values[:200]
 
 
 # 随机森林回归模型
-y_test = y_train
-x_test = x_train
+y_test = data["评分"].values[200:250]
+x_test = data.iloc[:, 12:].values[200:250]
 rf = RandomForestRegressor(n_estimators=100, random_state=42)
 rf.fit(x_train, y_train)
 y_predict_rf = rf.predict(x_test)
@@ -312,7 +324,6 @@ print("准确率：", rf.score(x_test, y_test))
 print("R2：", r2_score(y_test, y_predict_rf))
 print("MSE：", mean_squared_error(y_test, y_predict_rf))
 print("MAE：", mean_absolute_error(y_test, y_predict_rf))
-
 
 
 line = Line()
@@ -326,12 +337,11 @@ line.set_global_opts(title_opts=opts.TitleOpts(title="测试数据与预测数�
 line.render_notebook()
 
 
-
 # 回归树模型
-y_test = y_train
-x_test = x_train
+y_test = data["评分"].values[200:250]
+x_test = data.iloc[:, 12:].values[200:250]
 dt = DecisionTreeRegressor(random_state=42)
-dt.fit(x_train[:100], y_train[:100])
+dt.fit(x_train, y_train)
 y_predict_dt = dt.predict(x_test)
 
 # 输出回归树模型结果
@@ -340,7 +350,6 @@ print("准确率：", dt.score(x_test, y_test))
 print("R2：", r2_score(y_test, y_predict_dt))
 print("MSE：", mean_squared_error(y_test, y_predict_dt))
 print("MAE：", mean_absolute_error(y_test, y_predict_dt))
-
 
 
 line = Line()
@@ -354,10 +363,9 @@ line.set_global_opts(title_opts=opts.TitleOpts(title="测试数据与预测数�
 line.render_notebook()
 
 
-
 # 梯度提升回归模型
-y_test = y_train
-x_test = x_train
+y_test = data["评分"].values[200:250]
+x_test = data.iloc[:, 12:].values[200:250]
 gb = GradientBoostingRegressor(n_estimators=100, random_state=42)
 gb.fit(x_train, y_train)
 y_predict_gb = gb.predict(x_test)
@@ -368,7 +376,6 @@ print("准确率：", gb.score(x_test, y_test))
 print("R2：", r2_score(y_test, y_predict_gb))
 print("MSE：", mean_squared_error(y_test, y_predict_gb))
 print("MAE：", mean_absolute_error(y_test, y_predict_gb))
-
 
 
 line = Line()
@@ -382,4 +389,120 @@ line.set_global_opts(title_opts=opts.TitleOpts(title="测试数据与预测数�
 line.render_notebook()
 
 
+# url请求文件头
+headers = {'User-Agent': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+           'Cookie': 'll="118318"; bid=kpJGK8qHzSk; gr_user_id=8bbbe733-a805-4e58-bc1a-eb1bdc01bb90; douban-fav-remind=1; viewed="10560798_26858577_35751619"; push_noty_num=0; push_doumail_num=0; dbcl2="266513510:sJIduCLSn40"; ck=eKnB; ap_v=0,6.0; frodotk_db="883e05f049a1ab3098ba11d0dce50190"'}
 
+# 构造请求网址
+url_1 = "https://movie.douban.com/subject/1292722/comments?start="
+
+url_2 = "&limit=20&sort=new_score&status=P"
+
+# 循环抓取多页，循环变量为start,0,20,40...
+i = 0
+
+while True:
+    datas = []
+    # 拼接url
+    # 当i=0时
+    url = url_1+str(i*20)+url_2
+    print(url)
+    # request请求
+    html = requests.get(url, headers=headers)
+
+    # Beautifulsoup解析网址
+    soup = BeautifulSoup(html.text, 'lxml')
+
+    # 爬取的数据
+    # 评论时间
+    # 找span标签，找span标签中的class的comment-time
+    comment_time_list = soup.find_all('span', attrs={'class': 'comment-time'})
+
+    # 设置循环终止变量
+    # 当评论为0时，就结束循环
+    if len(comment_time_list) == 0:
+        break
+    # 评论用户名
+    use_name_list = soup.find_all('span', attrs={'class': 'comment-info'})
+    # 评论文本
+    comment_list = soup.find_all('span', attrs={'class': 'short'})
+    # 评分
+    rating_list = soup.find_all(
+        'span', attrs={'class': re.compile(r"allstar(\s\w+)?")})
+    # 点赞人数
+    vote_list = soup.find_all('span', attrs={'class': 'votes vote-count'})
+    for j in range(len(comment_time_list)):
+        datas.append({
+            '时间': comment_time_list[j].string[21:40],
+            # 评论用户名，下的a标签，
+            '用户': use_name_list[j].a.string,
+            '评论': comment_list[j].string,
+            '评价': rating_list[j].get('title'),
+            '点赞人数': vote_list[j].string
+        })
+    # 写入到文件
+    df = pd.DataFrame(datas)
+    # 存储为douban_movie.csv
+    if not os.path.exists('泰坦尼克号评论.csv'):
+        df.to_csv('泰坦尼克号评论.csv', encoding='utf_8_sig',
+                  mode='a', index=False, header=True)
+    else:
+        df.to_csv('泰坦尼克号评论.csv', encoding='utf_8_sig',
+                  mode='a', index=False, header=False)
+    print('page '+str(i+1)+' has done')
+    i = i+1
+    time.sleep(3)
+
+
+def sentiment(content):
+    s = SnowNLP(str(content))
+    return s.sentiments
+
+
+data = pd.read_csv("泰坦尼克号评论.csv")
+data = data.sort_values(by="点赞人数", ascending=False)
+data.head()
+
+
+# 读取数据
+df = pd.read_csv('泰坦尼克号评论.csv',)
+
+# 对评论进行情感分析并加入新列
+df['情感分析'] = df['评论'].apply(lambda x: SnowNLP(x).sentiments)
+display(df.head())
+
+
+# 分词并提取关键词
+for index, row in df.iterrows():
+    content = row['评论']
+    # 分词
+    seg_list = jieba.cut(content, cut_all=False)
+    # 提取关键词
+    keywords = jieba.analyse.extract_tags(
+        content, topK=10, withWeight=False, allowPOS=('n', 'vn', 'v', 'ns'))
+
+    pattern = re.compile(r'[\u4e00-\u9fa5]+')  # 匹配中文字符
+    clean_keywords = []
+    for keyword in keywords:
+        keyword = re.findall(pattern, keyword)
+        if keyword:
+            clean_keywords.append(keyword[0])
+    # 将关键词保存到新列中
+    df.at[index, '关键词'] = ','.join(clean_keywords)
+results = df["关键词"].values
+
+
+results = str(results).split(',')
+counter = Counter(results)
+result = sorted(counter.items(), key=lambda x: x[1], reverse=True)
+top_k = 10
+keywords = [x[0] for x in result[:top_k]]
+counts = [x[1] for x in result[:top_k]]
+# 画条形图
+bar = (
+    Bar()
+    .add_xaxis(keywords)
+    .add_yaxis("出现次数", counts)
+    .set_global_opts(title_opts=opts.TitleOpts(title="关键词出现次数排名Top{}".format(top_k)))
+)
+bar.render_notebook()
