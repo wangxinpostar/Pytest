@@ -70,6 +70,7 @@ for k in range(10):
         score = movie_soup.find('strong', {'property': 'v:average'}).text
         # 评价人数
         votes = movie_soup.find('span', {'property': 'v:votes'}).text
+
         infos = movie_soup.find('div', {'id': 'info'}).text.split('\n')[1:11]
         # infos返回的是一个列表，我们只需要索引提取就好了
         # 导演
@@ -128,23 +129,30 @@ df.to_csv("豆瓣电影top250.csv", index=False, header=True, encoding='utf_8_si
 
 
 data = pd.read_csv('豆瓣电影top250.csv')
-year_counts = data['上映年份'].value_counts()
-year_counts.columns = ['上映年份', '数量']
-year_counts = year_counts.sort_index()
+data
+
+
+data = pd.read_csv('豆瓣电影top250.csv')  # 读取csv文件
+year_counts = data['上映年份'].value_counts()  # 统计每个年份的电影数量
+year_counts.columns = ['上映年份', '数量']  # 对数据列重命名
+year_counts = year_counts.sort_index()  # 根据年份排序
 c = (
-    Bar()
-    .add_xaxis(list(year_counts.index))
-    .add_yaxis('上映数量', year_counts.values.tolist())
-    .set_global_opts(
-        title_opts=opts.TitleOpts(title='各年份上映电影数量'),
-        yaxis_opts=opts.AxisOpts(name='上映数量'),
-        xaxis_opts=opts.AxisOpts(name='上映年份'),
-        datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_='inside')], )
+    Bar()  # 定义柱状图
+    .add_xaxis(list(year_counts.index))  # 设置x轴数据
+    .add_yaxis('上映数量', year_counts.values.tolist())  # 设置y轴数据
+    .set_global_opts(  # 设置全局选项
+        title_opts=opts.TitleOpts(title='各年份上映电影数量'),  # 设置图表标题
+        yaxis_opts=opts.AxisOpts(name='上映数量'),  # 设置y轴名称
+        xaxis_opts=opts.AxisOpts(name='上映年份'),  # 设置x轴名称
+        datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_='inside')], )  # 设置数据缩放选项
 )
-c.render_notebook()
+c.render_notebook()  # 在Notebook中显示图表
 
 
+# 读取数据
 data = pd.read_csv('豆瓣电影top250.csv')
+
+# 统计各个年代的电影数量
 y1 = len(data[data['电影年份'] == '20世纪30年代'])
 y2 = len(data[data['电影年份'] == '20世纪40年代'])
 y3 = len(data[data['电影年份'] == '20世纪50年代'])
@@ -156,7 +164,7 @@ y8 = len(data[data['电影年份'] == '21世纪00年代'])
 y9 = len(data[data['电影年份'] == '21世纪10年代'])
 y10 = len(data[data['电影年份'] == '21世纪20年代'])
 
-# 定义饼图的数据
+# 定义饼图的数据，以元组形式存储
 data = [
     ("20世纪30年代", y1),
     ("20世纪40年代", y2),
@@ -175,22 +183,23 @@ pie = Pie() \
     .set_global_opts(
         title_opts=opts.TitleOpts(title="豆瓣电影 Top250 各年代电影数量比例图"),
         legend_opts=opts.LegendOpts(
-            orient="vertical",
-            pos_top="15%",
-            pos_left="85%"
+            orient="vertical",  # 图例垂直排列
+            pos_top="15%",  # 图例位置距离顶部的距离
+            pos_left="85%"  # 图例位置距离左侧的距离
         )
 )
+
+# 定义饼图中各部分的颜色
 colors = ['#ff7f50', '#e9cefa', '#ae70d6', '#e2cd32', '#a495ed',
           '#fa69b4', '#da58d3', '#2e5c5c', '#bfa450', '#45e0d0']
 
-
 # 设置饼图数据和样式
 pie.add(
-    "",
-    data,
-    radius=["40%", "70%"],
+    "",  # 系列名称为空
+    data,  # 设置数据
+    radius=["40%", "70%"],  # 设置内外半径，形成饼图环形效果
     label_opts=opts.LabelOpts(
-        formatter="{b}: {c} ({d}%)",
+        formatter="{b}: {c} ({d}%)",  # 标签格式，b代表数据项名称，c代表数据项值，d代表数据项所占比
         font_size=12,
         font_weight="bold",
         position="outside",
@@ -201,11 +210,17 @@ pie.render_notebook()
 
 
 data = pd.read_csv('豆瓣电影top250.csv')
+
+# 按照评价人数从小到大排序
 df = data.sort_values(by='评价人数', ascending=True)
+
+# 创建柱状图并设置全局配置
 c = (
     Bar()
+    # 添加X轴和Y轴的数据
     .add_xaxis(df['片名'].values.tolist()[-20:])
     .add_yaxis('评价人数', df['评价人数'].values.tolist()[-20:])
+    # 将XY轴翻转
     .reversal_axis()
     .set_global_opts(
         title_opts=opts.TitleOpts(title='电影评价人数'),
@@ -213,60 +228,77 @@ c = (
         xaxis_opts=opts.AxisOpts(name='人数'),
         datazoom_opts=opts.DataZoomOpts(type_='inside'),
     )
+    # 设置系列数据的标签位置
     .set_series_opts(label_opts=opts.LabelOpts(position="right"))
 )
+
+# 渲染图表并在Jupyter Notebook中显示
 c.render_notebook()
 
 
+# 导入 pandas 库并读取 CSV 文件
 data = pd.read_csv('豆瓣电影top250.csv', encoding='utf-8')
 
-# 计算每个导演的作品数量
+# 计算每个导演的作品数量并取前10名
 director_counts = data['导演'].value_counts().head(10)
 
 # 绘制条形图
 bar = (
     Bar()
-    .add_xaxis(director_counts.index.tolist())
-    .add_yaxis("数量", director_counts.tolist())
-    .set_global_opts(title_opts=opts.TitleOpts(title="导演作品数量Top10"),
-                     yaxis_opts=opts.AxisOpts(name='数量'),
-                     xaxis_opts=opts.AxisOpts(
-                         name='导演', axislabel_opts=opts.LabelOpts(rotate=30)),
-                     datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_='inside')])
+    .add_xaxis(director_counts.index.tolist())  # 设置 x 轴的数据
+    .add_yaxis("数量", director_counts.tolist())  # 设置 y 轴的数据和标签
+    .set_global_opts(title_opts=opts.TitleOpts(title="导演作品数量Top10"),  # 设置全局配置
+                     yaxis_opts=opts.AxisOpts(name='数量'),  # 设置 y 轴的名称
+                     xaxis_opts=opts.AxisOpts(name='导演', axislabel_opts=opts.LabelOpts(
+                         rotate=30)),  # 设置 x 轴的名称和标签旋转角度
+                     datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_='inside')])  # 设置数据缩放的类型和配置
 )
+
+# 在 Jupyter Notebook 中渲染图表
 bar.render_notebook()
 
 
-data = pd.read_csv('豆瓣电影top250.csv')
-country_counts = data['国家/地区'].value_counts()
-country_counts.columns = ['国家/地区', '数量']
+data = pd.read_csv('豆瓣电影top250.csv')  # 读取csv文件
 
-country_counts = country_counts.sort_values(ascending=True)
+country_counts = data['国家/地区'].value_counts()  # 统计各国家/地区上映数量
+country_counts.columns = ['国家/地区', '数量']  # 修改列名
+
+country_counts = country_counts.sort_values(ascending=True)  # 按数量升序排序
+
 c = (
-    Bar()
-    .add_xaxis(list(country_counts.index)[:])
-    .add_yaxis('地区上映数量', country_counts.values.tolist()[:])
-    .reversal_axis()
+    Bar()  # 创建柱状图
+    .add_xaxis(list(country_counts.index)[:])  # x轴数据为国家/地区名称
+    .add_yaxis('地区上映数量', country_counts.values.tolist()[:])  # y轴数据为上映数量
+    .reversal_axis()  # 翻转坐标轴
     .set_global_opts(
-        title_opts=opts.TitleOpts(title='地区上映电影数量'),
-        yaxis_opts=opts.AxisOpts(name='国家/地区'),
-        xaxis_opts=opts.AxisOpts(name='上映数量'),
+        title_opts=opts.TitleOpts(title='地区上映电影数量'),  # 设置标题
+        yaxis_opts=opts.AxisOpts(name='国家/地区'),  # 设置y轴名称
+        xaxis_opts=opts.AxisOpts(name='上映数量'),  # 设置x轴名称
     )
-    .set_series_opts(label_opts=opts.LabelOpts(position="right"))
+    .set_series_opts(label_opts=opts.LabelOpts(position="right"))  # 设置标签位置
 )
-c.render_notebook()
+c.render_notebook()  # 在notebook中渲染图表
 
 
+# 导入 Pandas 库，读取 csv 文件
 data = pd.read_csv('豆瓣电影top250.csv')
+
+# 计算每个国家/地区上榜电影的数量
 country_counts = data['国家/地区'].value_counts()
+
+# 导入名字映射字典
 name_map = namemap.nameMap
+
+# 创建地图实例
 map = Map(opts.InitOpts(width="700px", height="300px"))
-map.add("上榜电影数", [('美国', 112), ('中国', 42), ('日本', 34), ('英国', 20), ('韩国', 10), ('法国', 8), ('意大利', 5), ('德国', 4), ('澳大利亚', 3), ('印度', 2), ('瑞典', 1), ('泰国', 1), ('阿根廷', 1), ('巴西', 1), ('新西兰', 1), ('丹麦', 1), ('伊朗', 1), ('西班牙', 1), ('黎巴嫩', 1), ('爱尔兰', 1)], is_map_symbol_show=True, name_map=name_map,
-        maptype="world", label_opts=opts.LabelOpts(is_show=False))  # 地图区域颜色
-map.set_global_opts(title_opts=opts.TitleOpts(title='全球各地区上榜电影数'), legend_opts=opts.LegendOpts(is_show=True),
-                    visualmap_opts=opts.VisualMapOpts(
-                        range_color=["#E0ECF8", "#045FB4"], max_=120)
-                    )
+
+# 添加数据和设置地图属性
+map.add("上榜电影数", [('美国', 112), ('中国', 42), ('日本', 34), ('英国', 20), ('韩国', 10), ('法国', 8), ('意大利', 5), ('德国', 4), ('澳大利亚', 3), ('印度', 2), ('瑞典', 1), ('泰国', 1), ('阿根廷', 1), ('巴西', 1),
+        ('新西兰', 1), ('丹麦', 1), ('伊朗', 1), ('西班牙', 1), ('黎巴嫩', 1), ('爱尔兰', 1)], is_map_symbol_show=True, name_map=name_map, maptype="world", label_opts=opts.LabelOpts(is_show=False))
+map.set_global_opts(title_opts=opts.TitleOpts(title='全球各地区上榜电影数'), legend_opts=opts.LegendOpts(
+    is_show=True), visualmap_opts=opts.VisualMapOpts(range_color=["#E0ECF8", "#045FB4"], max_=120))
+
+# 渲染地图并在 Notebook 中显示
 map.render_notebook()
 
 
@@ -327,11 +359,11 @@ print("MAE：", mean_absolute_error(y_test, y_predict_rf))
 
 
 line = Line()
-line.add_xaxis(range(len(y_test)))
+line.add_xaxis((range(200, 251)))
 line.add_yaxis("测试数据", y_test, color="red", symbol='none')
 line.add_yaxis("预测数据", y_predict_rf, color="blue", symbol='none')
 line.set_global_opts(title_opts=opts.TitleOpts(title="测试数据与预测数据对比"),
-                     xaxis_opts=opts.AxisOpts(name="电影排行"),
+                     xaxis_opts=opts.AxisOpts(name="电影排行", min_=200, max_=250),
                      yaxis_opts=opts.AxisOpts(min_=8, max_=10, name="评分"),
                      )
 line.render_notebook()
@@ -353,11 +385,11 @@ print("MAE：", mean_absolute_error(y_test, y_predict_dt))
 
 
 line = Line()
-line.add_xaxis(range(len(y_test)))
+line.add_xaxis(range(200, 251))
 line.add_yaxis("测试数据", y_test, color="red", symbol='none')
 line.add_yaxis("预测数据", y_predict_dt, color="blue", symbol='none')
 line.set_global_opts(title_opts=opts.TitleOpts(title="测试数据与预测数据对比"),
-                     xaxis_opts=opts.AxisOpts(name="电影排行"),
+                     xaxis_opts=opts.AxisOpts(name="电影排行", min_=200, max_=250),
                      yaxis_opts=opts.AxisOpts(min_=8, max_=10, name="评分"),
                      )
 line.render_notebook()
@@ -379,11 +411,11 @@ print("MAE：", mean_absolute_error(y_test, y_predict_gb))
 
 
 line = Line()
-line.add_xaxis(range(len(y_test)))
+line.add_xaxis(range(200, 251))
 line.add_yaxis("测试数据", y_test, color="red", symbol='none')
 line.add_yaxis("预测数据", y_predict_gb, color="blue", symbol='none')
 line.set_global_opts(title_opts=opts.TitleOpts(title="测试数据与预测数据对比"),
-                     xaxis_opts=opts.AxisOpts(name="电影排行"),
+                     xaxis_opts=opts.AxisOpts(name="电影排行", min_=200, max_=250),
                      yaxis_opts=opts.AxisOpts(min_=8, max_=10, name="评分"),
                      )
 line.render_notebook()
@@ -431,14 +463,14 @@ while True:
         'span', attrs={'class': re.compile(r"allstar(\s\w+)?")})
     # 点赞人数
     vote_list = soup.find_all('span', attrs={'class': 'votes vote-count'})
-    for j in range(len(comment_time_list)):
+    for a, b, c, d, e in (zip(comment_time_list, use_name_list, comment_list, rating_list, vote_list)):
         datas.append({
-            '时间': comment_time_list[j].string[21:40],
-            # 评论用户名，下的a标签，
-            '用户': use_name_list[j].a.string,
-            '评论': comment_list[j].string,
-            '评价': rating_list[j].get('title'),
-            '点赞人数': vote_list[j].string
+            '时间': a.string[21:40],
+            # 评论用户名，下的a标签
+            '用户': b.a.string,
+            '评论': c.string,
+            '评价': d.get('title'),
+            '点赞人数': e.string
         })
     # 写入到文件
     df = pd.DataFrame(datas)
@@ -469,7 +501,7 @@ df = pd.read_csv('泰坦尼克号评论.csv',)
 
 # 对评论进行情感分析并加入新列
 df['情感分析'] = df['评论'].apply(lambda x: SnowNLP(x).sentiments)
-display(df.head())
+display(df)
 
 
 # 分词并提取关键词
@@ -506,3 +538,14 @@ bar = (
     .set_global_opts(title_opts=opts.TitleOpts(title="关键词出现次数排名Top{}".format(top_k)))
 )
 bar.render_notebook()
+
+
+# 构造词云数据
+
+# 创建词云图实例并添加数据
+wordcloud = WordCloud() \
+    .add("", data_pair=result, word_size_range=[12, 120], rotate_step=45, pos_left=30) \
+    .set_global_opts(title_opts=opts.TitleOpts(title="关键词词云图"))
+
+# 展示图表
+wordcloud.render_notebook()
